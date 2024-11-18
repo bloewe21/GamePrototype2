@@ -11,8 +11,6 @@ public class BucketScript : MonoBehaviour
     [SerializeField] private GameObject fish5Bucket;
 
     [SerializeField] private GameObject trash1Bucket;
-
-    //[SerializeField] private bool is3D;
     // Start is called before the first frame update
     void Start()
     {
@@ -25,6 +23,7 @@ public class BucketScript : MonoBehaviour
         
     }
 
+    //called in MoveFish3D SurfaceFunction()
     public void SpawnBucketFish(int fishNum)
     {
         //spawn bucket fish depending on MoveFish3D fishNum

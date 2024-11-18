@@ -7,8 +7,9 @@ using TMPro;
 public class MoveFish3D : MonoBehaviour
 {
     private Rigidbody rb;
-    [SerializeField] private int fishNum = 1;
-    [SerializeField] private float speedZ = 1f;
+    [SerializeField] public string fishName;
+    [SerializeField] public int fishNum = 1;
+    [SerializeField] private float speedX = 2f;
     [SerializeField] private int sliderStrength = 1;
     [SerializeField] private int fishWeight = 50;
     [SerializeField] private int scoreValue = 1;
@@ -20,19 +21,26 @@ public class MoveFish3D : MonoBehaviour
     private GameObject slider;
     private GameObject bucket;
     private GameObject catchanim;
+    private GameObject list;
+    private GameObject shadow;
+    public CollectionCount collectionCount;
     
     // Start is called before the first frame update
     void Start()
     {
+        collectionCount = FindObjectOfType<CollectionCount>();
+        
+        shadow = gameObject.transform.GetChild(0).gameObject;
+        //set initial speed of fish
         rb = GetComponent<Rigidbody>();
+        rb.velocity = new Vector3(speedX, 0f, 0f);
 
-        //spawn with random velocity direction
-        int speedMod = Random.Range(0, 2);
-        if (speedMod == 0)
-        {
-            speedZ *= -1;
-        }
-        rb.velocity = new Vector3(0f, 0f, speedZ);
+        //set material transparency to 0
+        //Color color = GetComponent<MeshRenderer>().materials[0].color;
+        Color color = shadow.GetComponent<MeshRenderer>().materials[0].color;
+        color.a = 0f;
+        //GetComponent<MeshRenderer>().materials[0].color = color;
+        shadow.GetComponent<MeshRenderer>().materials[0].color = color;
 
         bob = GameObject.Find("Bob");
         score = GameObject.Find("Score");
@@ -40,6 +48,9 @@ public class MoveFish3D : MonoBehaviour
         slider = canvas.transform.Find("Slider").gameObject;
         bucket = GameObject.Find("Buckets");
         catchanim = GameObject.Find("CatchAnim");
+        list = GameObject.Find("List");
+
+        StartCoroutine(AppearRoutine());
     }
 
     // Update is called once per frame
@@ -47,8 +58,8 @@ public class MoveFish3D : MonoBehaviour
     {
         if (isCaught)
         {
-            //attach fish to bob if caught
-            transform.position = new Vector3(bob.transform.position.x - .35f, bob.transform.position.y, bob.transform.position.z);
+            //attach fish to bob (positioned manually) if caught
+            transform.position = new Vector3(bob.transform.position.x - .50f, bob.transform.position.y, bob.transform.position.z);
             transform.rotation = Quaternion.Euler(0f, 0f, 90f);
         }
     }
@@ -57,12 +68,18 @@ public class MoveFish3D : MonoBehaviour
     {
         if (other.gameObject.tag == "Wall")
         {
+            //currently obsolete
             WallFunction();
         }
 
         if (other.gameObject.tag == "Bob")
         {
-            BobFunction();
+            //only call if bob doesn't have a fish already
+            if (!bob.GetComponent<MoveBob>().hasFish)
+            {
+                bob.GetComponent<MoveBob>().hasFish = true;
+                BobFunction();
+            }
         }
 
         if (other.gameObject.tag == "Surface")
@@ -71,16 +88,64 @@ public class MoveFish3D : MonoBehaviour
         }
     }
 
+    private IEnumerator AppearRoutine()
+    {
+        //get color of MeshRenderer
+        // MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+        MeshRenderer meshRenderer = shadow.GetComponent<MeshRenderer>();
+        Color color = meshRenderer.materials[0].color;
+
+        //while color's alpha is below 1
+        //while (color.a < 1f)
+        while (color.a < .5f)
+        {
+            //increase color's alpha value, apply to MeshRenderer
+            color.a += 0.001f;
+            meshRenderer.materials[0].color = color;
+            yield return new WaitForEndOfFrame();
+        }
+
+        //start DisappearRoutine() when alpha = 1
+        yield return new WaitForSeconds(1f);
+        StartCoroutine(DisappearRoutine());
+    }
+
+    private IEnumerator DisappearRoutine()
+    {
+        //get color of MeshRenderer
+        // MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+        MeshRenderer meshRenderer = shadow.GetComponent<MeshRenderer>();
+        Color color = meshRenderer.materials[0].color;
+
+        //while color's alpha is above 0
+        while (color.a > 0f)
+        {
+            //reduce color's alpha value. apply to MeshRenderer
+            color.a -= 0.001f;
+            meshRenderer.materials[0].color = color;
+            yield return new WaitForEndOfFrame();
+        }
+
+        //destroy fish when alpha = 0
+        Destroy(gameObject);
+    }
+
     private void WallFunction()
     {
-        //reverse direction if hit wall
-        speedZ = speedZ * -1.0f;
-        rb.velocity = new Vector3(0f, 0f, speedZ);
+        //currently obsolete
     }
 
     private void BobFunction()
     {
         isCaught = true;
+
+        //stop transparency routines, set alpha to 1
+        StopAllCoroutines();
+        Color color = GetComponent<MeshRenderer>().materials[0].color;
+        // color.a = 1f;
+        color.a = .5f;
+        //GetComponent<MeshRenderer>().materials[0].color = color;
+        shadow.GetComponent<MeshRenderer>().materials[0].color = color;
 
         //update bob weight, stop fish speed
         bob.GetComponent<MoveBob>().UpdateWeight(fishWeight);
@@ -94,14 +159,26 @@ public class MoveFish3D : MonoBehaviour
 
     private void SurfaceFunction()
     {
-        //update bob collider/weight
+        //return if not caught by bob
+        if (!isCaught)
+        {
+            return;
+        }
+
+        //reset bob position/weight
         bob.GetComponent<MoveBob>().ResetBob();
         //update score
         score.GetComponent<ScoreScript>().score += scoreValue;
         //call slider function
         slider.GetComponent<SliderScript>().RemoveFish();
+        //spawn bucket prefab
+        bucket.GetComponent<BucketScript>().SpawnBucketFish(fishNum);
+        //call catchanim function
+        catchanim.GetComponent<CatchAnimation>().PlayAnimation(fishNum);
+        //update check list
+        list.GetComponent<CheckList>().UpdateListFish(fishNum);
 
-        //save amount of this fish caught total
+        //save amount of this fish caught total (PlayerPrefs)
         string keyCheck = "Fish" + fishNum.ToString() + "Caught";
         if (!PlayerPrefs.HasKey(keyCheck))
         {
@@ -112,9 +189,7 @@ public class MoveFish3D : MonoBehaviour
             PlayerPrefs.SetInt(keyCheck, PlayerPrefs.GetInt(keyCheck) + 1);
         }
 
-        //spawn bucket prefab
-        bucket.GetComponent<BucketScript>().SpawnBucketFish(fishNum);
-        //call catchanim function
-        catchanim.GetComponent<CatchAnimation>().PlayAnimation();
+        //Add too fish collection
+        collectionCount.AddFish(fishNum);
     }
 }

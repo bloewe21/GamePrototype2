@@ -6,6 +6,7 @@ public class LineTest : MonoBehaviour
 {
     [SerializeField] private Transform[] points;
     [SerializeField] private LineController line;
+    
     // Start is called before the first frame update
     void Start()
     {

@@ -82,7 +82,7 @@ public class SpawnScript3D : MonoBehaviour
     {
         //deterimine random fish position
         float spawnXLocation = locations[Random.Range(0, locations.Length)];
-        float spawnYLocation = Random.Range(-2, 1);
+        float spawnYLocation = Random.Range(0, 1);
         float spawnZLocation = Random.Range(-2, 3);
         
         //determine random spawnable based off probabilities

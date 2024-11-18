@@ -13,7 +13,13 @@ public class TimerScript : MonoBehaviour
     private float currentTime;
 
     [SerializeField] UnityEvent timeEndEvent;
+    
     // Start is called before the first frame update
+    void Start()
+    {
+
+    }
+
     private void OnEnable()
     {
         //set newTime to given startTime

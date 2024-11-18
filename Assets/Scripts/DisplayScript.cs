@@ -16,11 +16,22 @@ public class DisplayScript : MonoBehaviour
         
     }
 
+    void OnEnable()
+    {
+        myFishDisplay.transform.eulerAngles = new Vector3(0f, 0f, 90f);
+    }
+
     // Update is called once per frame
     void Update()
     {
         //rotate display fish constantly
         myFishDisplay.transform.Rotate(rotateSpeed * Time.deltaTime, 0f, 0f);
+
+        //if no text attached
+        if (!myCaughtText)
+        {
+            return;
+        }
 
         //grab + print amount of X fish caught
         string caughtKey = "Fish" + fishNum.ToString() + "Caught";

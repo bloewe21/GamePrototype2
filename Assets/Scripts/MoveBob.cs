@@ -1,28 +1,32 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MoveBob : MonoBehaviour
 {
     private Rigidbody rb;
-    private float fishWeight = 0f;
 
-    //for 3D scene
-    [SerializeField] private float maxBobWidth;
-    [SerializeField] private float minBobWidth;
-    [SerializeField] private float maxBobHeight;
-    [SerializeField] private float minBobHeight;
+    [SerializeField] private GameObject bobSlider;
+    [SerializeField] private GameObject fishingRod;
+    [SerializeField] private GameObject reel;
 
     //MovementFunction1 variables
-    private float prevMousePosY;
+    [SerializeField] public float maxBobWidth;
+    [SerializeField] public float minBobWidth;
+    [SerializeField] private float maxBobHeight;
+    [SerializeField] private float minBobHeight;
     [SerializeField] private float defaultBobSpeed = 200f;
-    [SerializeField] private float bobSinkSpeed = 10f;
+    private float prevMousePosY;
+    private float fishWeight = 0f;
 
     //MovementFunction2 variables
-    [SerializeField] private float bobInputSpeed = 30.0f;
-    [SerializeField] private float bobInputDistance = 3.0f;
-    private bool isMoving = false;
-    private Vector3 currentVector = new Vector3(0f, 0f, 0f);
+    public bool isReeled = true;
+    private bool sliderUp = true;
+    private bool inWater = false;
+    public bool hitWater = false;
+    public bool hasFish = false;
+    public bool inMenu = false;
 
     // Start is called before the first frame update
     void Start()
@@ -31,107 +35,86 @@ public class MoveBob : MonoBehaviour
         prevMousePosY = Input.mousePosition.y;
     }
 
+    private void OnEnable()
+    {
+        //reset bobSlider to minValue
+        bobSlider.GetComponent<Slider>().value = bobSlider.GetComponent<Slider>().minValue;
+    }
+
     // Update is called once per frame
     void Update()
     {
-        //debug, reset bob position
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            transform.position = new Vector3(0f, 0f, 0f);
-        }
+        //reel rotation
+        reel.transform.eulerAngles = new Vector3(0f, 0f, transform.position.x * 40.0f);
 
-        //MovementFunction1();
-        //MovementFunction2();
-        MovementFunction3();
+        MovementFunction1();
+        MovementFunction2();
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        //disable collider when touch fish, trash
+        //bob down when collide with fish/trash
         if (other.gameObject.tag == "Fish")
         {
-            GetComponent<SphereCollider>().enabled = false;
+            rb.AddForce(new Vector2(0f, -200.0f));
         }
-
         if (other.gameObject.tag == "Trash")
         {
-            GetComponent<SphereCollider>().enabled = false;
+            rb.AddForce(new Vector2(0f, -200.0f));
+        }
+
+        //set bools for enter water/surface
+        if (other.gameObject.tag == "Water")
+        {
+            inWater = true;
+            hitWater = true;
+        }
+        if (other.gameObject.tag == "Surface")
+        {
+            isReeled = true;
         }
     }
 
+    private void OnTriggerExit(Collider other)
+    {
+        //set bool for exit water
+        if (other.gameObject.tag == "Water")
+        {
+            inWater = false;
+        }
+    }
+
+    //called in MoveFish3D SurfaceFunction(); MoveTrash3D SurfaceFunction()
     public void UpdateWeight(int newWeight)
     {
         fishWeight = newWeight;
     }
 
+    //called in custom UnityEvent shopButton
+    public void UpdateMenu()
+    {
+        inMenu = !inMenu;
+    }
+
+    //called in multiple scripts... resets bob's weight, position, bools...
     public void ResetBob()
     {
-        GetComponent<SphereCollider>().enabled = true;
         UpdateWeight(0);
+        transform.position = fishingRod.transform.position;
+        isReeled = true;
+        inWater = false;  
     }
 
+    //function for controlling bob
     private void MovementFunction1()
     {
-        //get current mouse position y
-        float mousePosY = Input.mousePosition.y;
-        //subtract previous mouse position y from current
-        float mouseDiff = mousePosY - prevMousePosY;
-        //normalize distance to move bob
-        float bobDiff = mouseDiff / (defaultBobSpeed + fishWeight);
-        
-        //set bobs new position if holding left click
-        if (Input.GetMouseButton(0))
+        //can't control if:
+        if (isReeled || !hitWater)
         {
-            transform.position = new Vector3(0f, transform.position.y + bobDiff, 0f);
-        }
-
-        //store current mouse position y as previous
-        prevMousePosY = mousePosY;
-    }
-
-    private void MovementFunction2()
-    {
-        var step = bobInputSpeed * Time.deltaTime;
-
-        if (isMoving)
-        {
-            transform.position = Vector3.MoveTowards(transform.position, currentVector, step);
-            if (transform.position == currentVector)
-            {
-                isMoving = false;
-            }
             return;
         }
 
-        float abovePositionY = transform.position.y + bobInputDistance;
-        float belowPositionY = transform.position.y - bobInputDistance;
-        Vector3 aboveVector = new Vector3(0f, abovePositionY, 0f);
-        Vector3 belowVector = new Vector3(0f, belowPositionY, 0f);
-
-        if (Input.GetKeyDown(KeyCode.UpArrow))
-        {
-            if (transform.position.y == maxBobHeight)
-            {
-                return;
-            }
-            isMoving = true;
-            currentVector = aboveVector;
-        }
-        if (Input.GetKeyDown(KeyCode.DownArrow))
-        {
-            if (transform.position.y == minBobHeight)
-            {
-                return;
-            }
-            isMoving = true;
-            currentVector = belowVector;
-        }
-
-    }
-
-    private void MovementFunction3()
-    {
-        //min/max distance bob can be pulled horizontally
+        //min/max distance bob can be pulled horizontally (obsolete due to bobSlider max strength?)
         //max bob width
         if (transform.position.x < maxBobWidth)
         {
@@ -143,19 +126,6 @@ public class MoveBob : MonoBehaviour
             transform.position = new Vector3(minBobWidth, transform.position.y, 0f);
         }
 
-        //min/max height the bob can rise/sink
-        //max bob height
-        if (transform.position.y > maxBobHeight)
-        {
-            transform.position = new Vector3(transform.position.x, maxBobHeight, 0f);
-        }
-        //min bob height
-        if (transform.position.y < minBobHeight)
-        {
-            transform.position = new Vector3(transform.position.x, minBobHeight, 0f);
-        }
-
-
         //get current mouse position y
         float mousePosY = Input.mousePosition.y;
         //subtract previous mouse position y from current
@@ -166,17 +136,62 @@ public class MoveBob : MonoBehaviour
         float bobDiffY = bobDiff / 2.0f;
         
         //set bobs new position if holding left click
-        //if (Input.GetMouseButton(0) && bobDiff != 0f)
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) && (transform.position.x < (transform.position.x - bobDiff)))
         {
-            transform.position = new Vector3(transform.position.x - bobDiff, transform.position.y + Mathf.Abs(bobDiffY), 0f);
-        }
-        else
-        {
-            transform.position = new Vector3(transform.position.x, transform.position.y - bobSinkSpeed, 0f);
+            transform.position = new Vector3(transform.position.x - bobDiff, transform.position.y, 0f);
         }
 
         //store current mouse position y as previous
         prevMousePosY = mousePosY;
+    }
+
+    //function for how bob moves
+    private void MovementFunction2()
+    {
+        //float up in water
+        if (inWater)
+        {
+            rb.AddForce(new Vector2(0f, 1.0f));
+        }
+
+        //bob is reeled fully in
+        if (isReeled)
+        {
+            //set position + bools
+            transform.position = fishingRod.transform.position;
+            rb.useGravity = false;
+            hitWater = false;
+
+            //slider hits max value, time to move down
+            if (bobSlider.GetComponent<Slider>().value == bobSlider.GetComponent<Slider>().maxValue)
+            {
+                sliderUp = false;
+            }
+            //slider hits min value, time to move up
+            if (bobSlider.GetComponent<Slider>().value == bobSlider.GetComponent<Slider>().minValue)
+            {
+                sliderUp = true;
+            }
+
+            //move slider
+            if (sliderUp)
+            {
+                //slider moves up
+                bobSlider.GetComponent<Slider>().value += Time.deltaTime;
+            }
+            else
+            {
+                //slider moves down
+                bobSlider.GetComponent<Slider>().value -= Time.deltaTime;
+            }
+
+            //launch bob at bobSlider strength
+            if (Input.GetMouseButtonDown(0) && !inMenu)
+            {
+                isReeled = false;
+                rb.AddForce(new Vector2(-1800f * bobSlider.GetComponent<Slider>().value - 150f, 0f));
+                rb.useGravity = true;
+            }
+        }
     }
 }

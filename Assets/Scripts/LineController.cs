@@ -6,16 +6,11 @@ public class LineController : MonoBehaviour
 {
     private LineRenderer lr;
     private Transform[] points;
+
     // Start is called before the first frame update
     private void Awake()
     {
         lr = GetComponent<LineRenderer>();
-    }
-
-    public void SetUpLine(Transform[] points)
-    {
-        lr.positionCount = points.Length;
-        this.points = points;
     }
 
     // Update is called once per frame
@@ -25,5 +20,11 @@ public class LineController : MonoBehaviour
         {
             lr.SetPosition(i, points[i].position);
         }
+    }
+
+    public void SetUpLine(Transform[] points)
+    {
+        lr.positionCount = points.Length;
+        this.points = points;
     }
 }

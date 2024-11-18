@@ -2,15 +2,24 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
+using TMPro;
+using UnityEngine.UI;
 
 public class MenuScript : MonoBehaviour
 {
+    [SerializeField] private int buttonID;
+    [SerializeField] private int myPrice;
+    [SerializeField] private GameObject shopManager;
     [SerializeField] UnityEvent buttonPressEvent;
 
+    private GameObject score;
     private GameObject bob;
+
     // Start is called before the first frame update
     void Start()
     {
+        score = GameObject.Find("Score");
     }
 
     // Update is called once per frame
@@ -19,16 +28,17 @@ public class MenuScript : MonoBehaviour
         
     }
 
-    public void PressButton()
+    //start game button, back button
+    public void PressButton1()
     {
         //custom unity event triggered on button press
         buttonPressEvent.Invoke();
 
-        //find bob, reset to 0 0 0
+        //find bob, call bob's ResetBob()
         bob = GameObject.Find("Bob");
         if (bob)
         {
-            bob.transform.position = new Vector3(0f, 0f, 0f);
+            bob.GetComponent<MoveBob>().ResetBob();
         }
 
         //destroy all fish, trash, bucketitems
@@ -50,5 +60,17 @@ public class MenuScript : MonoBehaviour
         }
     }
 
+    //shop button
+    public void PressButton2()
+    {
+        //custom unity event triggered on button press
+        buttonPressEvent.Invoke();
+    }
 
+    //buy button
+    public void BuyButton()
+    {
+        //call shopManager's BuyFunction()
+        shopManager.GetComponent<ShopManager>().BuyFunction(buttonID, myPrice);
+    }
 }

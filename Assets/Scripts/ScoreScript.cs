@@ -14,6 +14,7 @@ public class ScoreScript : MonoBehaviour
 
     void OnEnable()
     {
+        //set score to 0 when game starts
         score = 0;
         GetComponent<TMP_Text>().text = score.ToString();
     }
