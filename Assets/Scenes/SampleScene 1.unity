@@ -3573,7 +3573,7 @@ MonoBehaviour:
   - {fileID: 60257517858906990, guid: 93e50e2206f5cb544b7d417daff3a35a, type: 3}
   - {fileID: 60257517858906990, guid: c6d7561f5256d4e47b26fa483e27da3c, type: 3}
   - {fileID: 2391348738880377317, guid: cf1f4e9b4c4bd684a87fb6671cf31339, type: 3}
-  probabilitiesGroupThree: 0a0000000f0000001e00000019000000102700000a000000
+  probabilitiesGroupThree: 0a0000000f0000001e000000190000000a0000000a000000
 --- !u!1 &356662844
 GameObject:
   m_ObjectHideFlags: 0
