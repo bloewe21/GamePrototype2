@@ -38,11 +38,13 @@ public class SliderScript : MonoBehaviour
 
     public void RemoveFish()
     {
+        print("remove");
         //if fish on the line, remove it
         if (currentFish)
         {
            Destroy(currentFish);
            bob.GetComponent<MoveBob>().hasFish = false;
+           bob.GetComponent<MoveBob>().UpdateWeight(0);
         }
 
         //reset value back to maxValue, disable slider
