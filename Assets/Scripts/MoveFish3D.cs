@@ -59,7 +59,7 @@ public class MoveFish3D : MonoBehaviour
         if (isCaught)
         {
             //attach fish to bob (positioned manually) if caught
-            transform.position = new Vector3(bob.transform.position.x - .50f, bob.transform.position.y, bob.transform.position.z);
+            transform.position = new Vector3(bob.transform.position.x - .40f, bob.transform.position.y, bob.transform.position.z);
             transform.rotation = Quaternion.Euler(0f, 0f, 90f);
         }
     }

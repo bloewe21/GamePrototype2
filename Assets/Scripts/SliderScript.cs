@@ -38,7 +38,6 @@ public class SliderScript : MonoBehaviour
 
     public void RemoveFish()
     {
-        print("remove");
         //if fish on the line, remove it
         if (currentFish)
         {
